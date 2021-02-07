@@ -3,7 +3,7 @@ use std::io::Read;
 
 use self::read::{BincodeRead, IoReader, SliceReader};
 use byteorder::ReadBytesExt;
-use config::{IntEncoding, SizeLimit};
+use config::{IntEncoding, SizeLimit, LenWidth};
 use serde;
 use serde::de::Error as DeError;
 use serde::de::IntoDeserializer;
@@ -91,13 +91,21 @@ impl<'de, R: BincodeRead<'de>, O: Options> Deserializer<R, O> {
     }
 
     fn read_vec(&mut self) -> Result<Vec<u8>> {
-        let len = O::IntEncoding::deserialize_len(self)?;
+        let len = O::LenWidth::deserialize_len(self)?;
+        // let len = O::IntEncoding::deserialize_len(self)?;
+        self.read_bytes(len as u64)?;
+        self.reader.get_byte_buffer(len)
+    }
+
+
+    fn read_vec_len16(&mut self) -> Result<Vec<u8>> {
+        let len = O::LenWidth::deserialize_str_len(self)?;
         self.read_bytes(len as u64)?;
         self.reader.get_byte_buffer(len)
     }
 
     fn read_string(&mut self) -> Result<String> {
-        let vec = self.read_vec()?;
+        let vec = self.read_vec_len16()?;
         String::from_utf8(vec).map_err(|e| ErrorKind::InvalidUtf8Encoding(e.utf8_error()).into())
     }
 }
@@ -232,7 +240,8 @@ where
     where
         V: serde::de::Visitor<'de>,
     {
-        let len = O::IntEncoding::deserialize_len(self)?;
+        let len = O::LenWidth::deserialize_str_len(self)?;
+        // let len = O::IntEncoding::deserialize_len(self)?;
         self.read_bytes(len as u64)?;
         self.reader.forward_read_str(len, visitor)
     }
@@ -248,7 +257,8 @@ where
     where
         V: serde::de::Visitor<'de>,
     {
-        let len = O::IntEncoding::deserialize_len(self)?;
+        let len = O::LenWidth::deserialize_len(self)?;
+        // let len = O::IntEncoding::deserialize_len(self)?;
         self.read_bytes(len as u64)?;
         self.reader.forward_read_bytes(len, visitor)
     }
@@ -345,7 +355,8 @@ where
     where
         V: serde::de::Visitor<'de>,
     {
-        let len = O::IntEncoding::deserialize_len(self)?;
+        let len = O::LenWidth::deserialize_len(self)?;
+        // let len = O::IntEncoding::deserialize_len(self)?;
 
         self.deserialize_tuple(len, visitor)
     }
@@ -391,7 +402,8 @@ where
             }
         }
 
-        let len = O::IntEncoding::deserialize_len(self)?;
+        let len = O::LenWidth::deserialize_len(self)?;
+        // let len = O::IntEncoding::deserialize_len(self)?;
 
         visitor.visit_map(Access {
             deserializer: self,

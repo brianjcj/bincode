@@ -590,7 +590,7 @@ impl IntEncoding for VarintEncoding {
     }
 }
 
-fn cast_u64_to_usize(n: u64) -> Result<usize> {
+pub(crate) fn cast_u64_to_usize(n: u64) -> Result<usize> {
     if n <= usize::max_value() as u64 {
         Ok(n as usize)
     } else {

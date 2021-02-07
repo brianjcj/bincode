@@ -5,7 +5,7 @@ use serde;
 
 use byteorder::WriteBytesExt;
 
-use super::config::{IntEncoding, SizeLimit};
+use super::config::{IntEncoding, SizeLimit, LenWidth};
 use super::{Error, ErrorKind, Result};
 use config::{BincodeByteOrder, Options};
 use std::mem::size_of;
@@ -119,7 +119,8 @@ impl<'a, W: Write, O: Options> serde::Serializer for &'a mut Serializer<W, O> {
     }
 
     fn serialize_str(self, v: &str) -> Result<()> {
-        O::IntEncoding::serialize_len(self, v.len())?;
+        O::LenWidth::serialize_str_len(self, v.len())?;
+        // O::IntEncoding::serialize_len(self, v.len())?;
         self.writer.write_all(v.as_bytes()).map_err(Into::into)
     }
 
@@ -130,7 +131,8 @@ impl<'a, W: Write, O: Options> serde::Serializer for &'a mut Serializer<W, O> {
     }
 
     fn serialize_bytes(self, v: &[u8]) -> Result<()> {
-        O::IntEncoding::serialize_len(self, v.len())?;
+        O::LenWidth::serialize_len(self, v.len())?;
+        // O::IntEncoding::serialize_len(self, v.len())?;
         self.writer.write_all(v).map_err(Into::into)
     }
 
@@ -148,7 +150,8 @@ impl<'a, W: Write, O: Options> serde::Serializer for &'a mut Serializer<W, O> {
 
     fn serialize_seq(self, len: Option<usize>) -> Result<Self::SerializeSeq> {
         let len = len.ok_or(ErrorKind::SequenceMustHaveLength)?;
-        O::IntEncoding::serialize_len(self, len)?;
+        O::LenWidth::serialize_len(self, len)?;
+        // O::IntEncoding::serialize_len(self, len)?;
         Ok(Compound { ser: self })
     }
 
@@ -177,7 +180,8 @@ impl<'a, W: Write, O: Options> serde::Serializer for &'a mut Serializer<W, O> {
 
     fn serialize_map(self, len: Option<usize>) -> Result<Self::SerializeMap> {
         let len = len.ok_or(ErrorKind::SequenceMustHaveLength)?;
-        O::IntEncoding::serialize_len(self, len)?;
+        O::LenWidth::serialize_len(self, len)?;
+        // O::IntEncoding::serialize_len(self, len)?;
         Ok(Compound { ser: self })
     }
 
