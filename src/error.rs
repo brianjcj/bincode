@@ -1,6 +1,7 @@
 use std::error::Error as StdError;
 use std::io;
 use std::str::Utf8Error;
+use std::string::FromUtf8Error;
 use std::{error, fmt};
 
 use serde;
@@ -19,6 +20,8 @@ pub enum ErrorKind {
     Io(io::Error),
     /// Returned if the deserializer attempts to deserialize a string that is not valid utf8
     InvalidUtf8Encoding(Utf8Error),
+    /// Returned if the deserializer attempts to deserialize a string that is not valid utf8
+    InvalidUtf8EncodingEx(FromUtf8Error),
     /// Returned if the deserializer attempts to deserialize a bool that was
     /// not encoded as either a 1 or a 0
     InvalidBoolEncoding(u8),
@@ -44,6 +47,7 @@ impl StdError for ErrorKind {
         match *self {
             ErrorKind::Io(ref err) => error::Error::description(err),
             ErrorKind::InvalidUtf8Encoding(_) => "string is not valid utf8",
+            ErrorKind::InvalidUtf8EncodingEx(_) => "string is not valid utf8",
             ErrorKind::InvalidBoolEncoding(_) => "invalid u8 while decoding bool",
             ErrorKind::InvalidCharEncoding => "char is not valid",
             ErrorKind::InvalidTagEncoding(_) => "tag for enum is not valid",
@@ -62,6 +66,7 @@ impl StdError for ErrorKind {
         match *self {
             ErrorKind::Io(ref err) => Some(err),
             ErrorKind::InvalidUtf8Encoding(_) => None,
+            ErrorKind::InvalidUtf8EncodingEx(_) => None,
             ErrorKind::InvalidBoolEncoding(_) => None,
             ErrorKind::InvalidCharEncoding => None,
             ErrorKind::InvalidTagEncoding(_) => None,
@@ -84,6 +89,7 @@ impl fmt::Display for ErrorKind {
         match *self {
             ErrorKind::Io(ref ioerr) => write!(fmt, "io error: {}", ioerr),
             ErrorKind::InvalidUtf8Encoding(ref e) => write!(fmt, "{}: {}", self.description(), e),
+            ErrorKind::InvalidUtf8EncodingEx(ref e) => write!(fmt, "{}: {}", self.description(), e),
             ErrorKind::InvalidBoolEncoding(b) => {
                 write!(fmt, "{}, expected 0 or 1, found {}", self.description(), b)
             }

@@ -106,7 +106,7 @@ impl<'de, R: BincodeRead<'de>, O: Options> Deserializer<R, O> {
 
     fn read_string(&mut self) -> Result<String> {
         let vec = self.read_vec_len16()?;
-        String::from_utf8(vec).map_err(|e| ErrorKind::InvalidUtf8Encoding(e.utf8_error()).into())
+        String::from_utf8(vec).map_err(|e| ErrorKind::InvalidUtf8EncodingEx(e).into())
     }
 }
 
