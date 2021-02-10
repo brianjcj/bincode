@@ -119,6 +119,12 @@ impl<'a, W: Write, O: Options> serde::Serializer for &'a mut Serializer<W, O> {
     }
 
     fn serialize_str(self, v: &str) -> Result<()> {
+        if v.starts_with(crate::YYP_BASE64_STR_PREFIX) {
+            if let Ok(v) = base64::decode(&v[crate::YYP_BASE64_STR_PREFIX.len()..]) {
+                O::LenWidth::serialize_str_len(self, v.len())?;
+                return self.writer.write_all(&v).map_err(Into::into);
+            }
+        }
         O::LenWidth::serialize_str_len(self, v.len())?;
         // O::IntEncoding::serialize_len(self, v.len())?;
         self.writer.write_all(v.as_bytes()).map_err(Into::into)
@@ -257,6 +263,11 @@ impl<O: Options> SizeChecker<O> {
         let bytes = O::IntEncoding::len_size(len);
         self.add_raw(bytes)
     }
+
+    fn add_str_len(&mut self, len: usize) -> Result<()> {
+        let bytes = O::LenWidth::str_len_size::<O>(len);
+        self.add_raw(bytes)
+    }
 }
 
 macro_rules! impl_size_int {
@@ -318,7 +329,13 @@ impl<'a, O: Options> serde::Serializer for &'a mut SizeChecker<O> {
     }
 
     fn serialize_str(self, v: &str) -> Result<()> {
-        self.add_len(v.len())?;
+        if v.starts_with(crate::YYP_BASE64_STR_PREFIX) {
+            if let Ok(v) = base64::decode(&v[crate::YYP_BASE64_STR_PREFIX.len()..]) {
+                self.add_str_len(v.len())?;
+                return self.add_raw(v.len() as u64)
+            }
+        }
+        self.add_str_len(v.len())?;
         self.add_raw(v.len() as u64)
     }
 

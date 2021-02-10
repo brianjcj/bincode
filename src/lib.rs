@@ -164,3 +164,6 @@ where
         .allow_trailing_bytes()
         .serialized_size(value)
 }
+
+/// Doc: later
+pub const YYP_BASE64_STR_PREFIX: &str = "=*yyppbrs-base64*=_";

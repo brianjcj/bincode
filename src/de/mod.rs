@@ -106,7 +106,13 @@ impl<'de, R: BincodeRead<'de>, O: Options> Deserializer<R, O> {
 
     fn read_string(&mut self) -> Result<String> {
         let vec = self.read_vec_len16()?;
-        String::from_utf8(vec).map_err(|e| ErrorKind::InvalidUtf8EncodingEx(e).into())
+        match std::str::from_utf8(&vec) {
+            Ok(..) => Ok(unsafe { String::from_utf8_unchecked(vec) }),
+            Err(_) => {
+                Ok(format!("{}{}", crate::YYP_BASE64_STR_PREFIX, base64::encode(vec)))
+            }
+        }
+        // String::from_utf8(vec).map_err(|e| ErrorKind::InvalidUtf8EncodingEx(e).into())
     }
 }
 

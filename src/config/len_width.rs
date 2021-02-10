@@ -24,6 +24,7 @@ pub trait LenWidth {
         de: &mut ::de::Deserializer<R, O>,
     ) -> Result<usize>;
 
+    fn str_len_size<O: Options>(len: usize) -> u64;
 }
 
 /// Doc: Later
@@ -65,6 +66,9 @@ impl LenWidth for DefaultLenWidth {
         O::IntEncoding::deserialize_u64(de).and_then(cast_u64_to_usize)
     }
 
+    fn str_len_size<O: Options>(len: usize) -> u64 {
+        O::IntEncoding::len_size(len)
+    }
 }
 
 impl LenWidth for YYPLenWidth {
@@ -96,5 +100,10 @@ impl LenWidth for YYPLenWidth {
         de: &mut ::de::Deserializer<R, O>,
     ) -> Result<usize> {
         O::IntEncoding::deserialize_u16(de).map(|n| n as usize)
+    }
+
+    #[inline(always)]
+    fn str_len_size<O: Options>(len: usize) -> u64 {
+        O::IntEncoding::u16_size(len as u16)
     }
 }
